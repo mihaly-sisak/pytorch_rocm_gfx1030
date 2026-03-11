@@ -1,0 +1,34 @@
+diff --git a/.github/scripts/amd/package_triton_wheel.sh b/.github/scripts/amd/package_triton_wheel.sh
+index fe8d915422d..16c53ed0714 100755
+--- a/.github/scripts/amd/package_triton_wheel.sh
++++ b/.github/scripts/amd/package_triton_wheel.sh
+@@ -31,14 +31,9 @@ fi
+ # Remove packaged libs and headers
+ rm -rf $TRITON_ROCM_DIR/include/*
+ 
+-LIBNUMA_PATH="/usr/lib64/libnuma.so.1"
+-LIBELF_PATH="/usr/lib64/libelf.so.1"
+-OS_NAME=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+-if [[ "$OS_NAME" == *"CentOS Linux"* ]]; then
+-    LIBTINFO_PATH="/usr/lib64/libtinfo.so.5"
+-else
+-    LIBTINFO_PATH="/usr/lib64/libtinfo.so.6"
+-fi
++LIBNUMA_PATH="/usr/lib/x86_64-linux-gnu/libnuma.so.1"
++LIBELF_PATH="/usr/lib/x86_64-linux-gnu/libelf.so.1"
++LIBTINFO_PATH="/usr/lib/x86_64-linux-gnu/libtinfo.so.6"
+ 
+ OS_SO_PATHS=(
+     $LIBELF_PATH
+diff --git a/cmake/External/aotriton.cmake b/cmake/External/aotriton.cmake
+index 5d915877465..510484c78c4 100644
+--- a/cmake/External/aotriton.cmake
++++ b/cmake/External/aotriton.cmake
+@@ -56,6 +56,7 @@ if(NOT __AOTRITON_INCLUDED)
+       GIT_REPOSITORY https://github.com/ROCm/aotriton.git
+       GIT_SUBMODULES_RECURSE ${RECURSIVE}
+       GIT_TAG ${__AOTRITON_CI_COMMIT}
++      PATCH_COMMAND git apply ../../../../../aotriton.patch
+       PREFIX ${__AOTRITON_EXTERN_PREFIX}
+       CMAKE_CACHE_ARGS
+       -DAOTRITON_TARGET_ARCH:STRING=${PYTORCH_ROCM_ARCH}
