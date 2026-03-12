@@ -1,0 +1,19 @@
+diff --git a/setup.py b/setup.py
+index 974efda..6b63dcd 100644
+--- a/setup.py
++++ b/setup.py
+@@ -111,12 +111,14 @@ class CMakeBuild(build_ext):
+         # python setup.py build_ext --debug install
+         torch_dir = Path(torch.utils.cmake_prefix_path) / "Torch"
+         cmake_build_type = os.environ.get("CMAKE_BUILD_TYPE", "Release")
++        cmake_prefix_path= os.environ.get("CMAKE_PREFIX_PATH", "")
+         enable_cuda = os.environ.get("ENABLE_CUDA", "")
+         torchcodec_disable_compile_warning_as_error = os.environ.get(
+             "TORCHCODEC_DISABLE_COMPILE_WARNING_AS_ERROR", "OFF"
+         )
+         python_version = sys.version_info
+         cmake_args = [
++            f"-DCMAKE_PREFIX_PATH={cmake_prefix_path}",
+             f"-DCMAKE_INSTALL_PREFIX={self._install_prefix}",
+             f"-DTorch_DIR={torch_dir}",
+             "-DCMAKE_VERBOSE_MAKEFILE=ON",

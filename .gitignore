@@ -1,6 +1,8 @@
 aotriton/
 audio/
 pytorch/
+torchcodec/
 triton/
 venv/
+venv_test/
 vision/

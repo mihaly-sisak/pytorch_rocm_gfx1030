@@ -2,11 +2,12 @@
 
 set -euox pipefail
 
-RESET_VENV=1
-BUILD_PYTORCH=1
-BUILD_TORCHVISION=1
-BUILD_TORCHAUDIO=1
-BUILD_TRITRON=1
+RESET_VENV=0
+BUILD_PYTORCH=0
+BUILD_TORCHVISION=0
+BUILD_TORCHAUDIO=0
+BUILD_TORCHCODEC=1
+BUILD_TRITRON=0
 
 # create venv
 if [ "$RESET_VENV" -eq "1" ]
@@ -20,6 +21,7 @@ source venv/bin/activate
 # build versions
 export PYTORCH_BUILD_VERSION=2.9.1
 export PYTORCH_VISION_VERSION=0.24.1
+export PYTORCH_CODEC_VERSION=0.9.1
 
 # build env vars
 export PYTORCH_BUILD_NUMBER=0
@@ -30,6 +32,7 @@ export USE_ROCM=1
 export PYTORCH_ROCM_ARCH=gfx1030
 export CMAKE_PREFIX_PATH="${VIRTUAL_ENV}"
 export CMAKE_BUILD_TYPE=Release
+export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc --all)
 
 # pytorch
 if [ "$BUILD_PYTORCH" -eq "1" ]
@@ -80,6 +83,32 @@ then
     python setup.py bdist_wheel
     export -n BUILD_VERSION
     uv pip install torchaudio@$(echo -n ./dist/torchaudio-*.whl)
+    cd ..
+fi
+
+# torchcodec
+if [ "$BUILD_TORCHCODEC" -eq "1" ]
+then
+    rm -rf torchcodec || true
+    git clone --depth 1 --branch v$PYTORCH_CODEC_VERSION https://github.com/meta-pytorch/torchcodec.git
+    cd torchcodec
+    git apply ../torchcodec.patch
+    uv pip install pkgconfig
+    # sudo apt install libavdevice-dev libavfilter-dev
+    original_CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH
+    export CMAKE_PREFIX_PATH="$(python -m pybind11 --cmakedir);$CMAKE_PREFIX_PATH"
+    # torchcodec is trying to use NVDEC
+    export ENABLE_CUDA=OFF
+    export TORCHCODEC_DISABLE_COMPILE_WARNING_AS_ERROR=ON
+    export I_CONFIRM_THIS_IS_NOT_A_LICENSE_VIOLATION=ON
+    export BUILD_VERSION=$PYTORCH_CODEC_VERSION
+    python setup.py bdist_wheel
+    export -n BUILD_VERSION
+    export -n I_CONFIRM_THIS_IS_NOT_A_LICENSE_VIOLATION
+    export -n TORCHCODEC_DISABLE_COMPILE_WARNING_AS_ERROR
+    export -n ENABLE_CUDA
+    export CMAKE_PREFIX_PATH=$original_CMAKE_PREFIX_PATH
+    uv pip install torchcodec@$(echo -n ./dist/torchcodec-*.whl)
     cd ..
 fi
 
